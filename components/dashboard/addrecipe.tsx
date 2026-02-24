@@ -3,11 +3,13 @@
 import React, { useState } from "react";
 import { Image as ImageIcon, X, Save, Loader2, Clock } from "lucide-react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 export function AddRecipeModal() {
+  const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
+  const [loadingNav, setLoadingNav] = useState(false); // for close button
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [showModal, setShowModal] = useState(true);
 
   const [recipe, setRecipe] = useState({
     name: "",
@@ -33,11 +35,15 @@ export function AddRecipeModal() {
     console.log("Saved Recipe:", recipe);
 
     setSubmitting(false);
-    alert("Recipe saved!"); // simple success feedback
-    setShowModal(false); // hide modal after saving
+    alert("Recipe saved!");
+    router.push("/myrecipe"); // navigate after save
   };
 
-  if (!showModal) return null; // hide modal if closed
+  const handleClose = async () => {
+    setLoadingNav(true);
+    await new Promise((resolve) => setTimeout(resolve, 500)); // optional loading
+    router.push("/myrecepie");
+  };
 
   return (
     <div className="fixed inset-0 bg-black/60 z-100 flex items-center justify-center p-4 backdrop-blur-sm">
@@ -46,10 +52,14 @@ export function AddRecipeModal() {
         <div className="px-6 py-4 border-b border-green-200 flex justify-between items-center bg-green-50/50">
           <h2 className="text-xl font-bold text-gray-900">Add New Recipe</h2>
           <button
-            onClick={() => setShowModal(false)}
+            onClick={handleClose}
             className="p-2 hover:bg-red-100 rounded-full"
           >
-            <X className="w-6 h-6" />
+            {loadingNav ? (
+              <Loader2 className="w-6 h-6 animate-spin text-gray-500" />
+            ) : (
+              <X className="w-6 h-6" />
+            )}
           </button>
         </div>
 
@@ -99,6 +109,8 @@ export function AddRecipeModal() {
                       src={imagePreview}
                       alt="Preview"
                       className="h-48 w-full object-cover rounded-xl"
+                      width={500}
+                      height={300}
                     />
                     <button
                       type="button"
@@ -150,7 +162,7 @@ export function AddRecipeModal() {
 
         {/* Footer */}
         <div className="px-6 py-4 flex justify-end gap-3 border-t">
-          <button onClick={() => setShowModal(false)} className="px-6 py-2">
+          <button onClick={handleClose} className="px-6 py-2">
             Cancel
           </button>
           <button

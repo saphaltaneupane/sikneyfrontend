@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useEffect, useState, Suspense } from "react"; // Removed useCallback for simplicity
+import React, { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Heart, Clock, ArrowLeft } from "lucide-react";
+import { Heart, Clock, Menu as MenuIcon } from "lucide-react";
 
-// 1. Keep mock data outside the component to prevent re-renders
+// Mock Data
 const inspirationalQuotes = [
   "Cooking is love made visible.",
   "Good food is the foundation of genuine happiness.",
@@ -17,14 +17,50 @@ const MOCK_RECIPES = [
     name: "Spaghetti Carbonara",
     duration: 25,
     ingredients: "200g spaghetti\n100g pancetta",
-    steps: "1. Cook pasta.",
+    steps: "Cook pasta, fry pancetta, mix with eggs and cheese.",
+    description: "Classic Italian pasta with creamy sauce.",
+    image: "/images/spaghetti.jpg",
+    favorite: true,
   },
   {
     id: "2",
     name: "Avocado Toast",
     duration: 10,
     ingredients: "Bread, Avocado",
-    steps: "1. Toast bread.",
+    steps: "Toast bread, smash avocado, add toppings.",
+    description: "Healthy breakfast or snack.",
+    image: "/images/avocado-toast.jpg",
+    favorite: true,
+  },
+  {
+    id: "3",
+    name: "Chicken Curry",
+    duration: 40,
+    ingredients: "Chicken, spices, onions, tomatoes",
+    steps: "Cook chicken, add spices, simmer with sauce.",
+    description: "Spicy and flavorful curry.",
+    image: "/images/chicken-curry.jpg",
+    favorite: true,
+  },
+  {
+    id: "4",
+    name: "Pancakes",
+    duration: 20,
+    ingredients: "Flour, eggs, milk, sugar",
+    steps: "Mix ingredients, cook on skillet.",
+    description: "Fluffy breakfast pancakes.",
+    image: "/images/pancakes.jpg",
+    favorite: false,
+  },
+  {
+    id: "5",
+    name: "Caesar Salad",
+    duration: 15,
+    ingredients: "Lettuce, croutons, dressing",
+    steps: "Toss ingredients together.",
+    description: "Crisp and refreshing salad.",
+    image: "/images/caesar-salad.jpg",
+    favorite: false,
   },
 ];
 
@@ -36,33 +72,24 @@ export function DashboardContent() {
   const [recipes, setRecipes] = useState<typeof MOCK_RECIPES>([]);
   const [loadingRecipes, setLoadingRecipes] = useState(true);
   const [currentQuote, setCurrentQuote] = useState(inspirationalQuotes[0]);
-  const [favorites, setFavorites] = useState([]);
+  const [menuOpen, setMenuOpen] = useState(false);
 
-  // FIXED FETCH LOGIC:
-  // Instead of useCallback, we define the async function INSIDE useEffect.
-  // This is the safest way to avoid the "Promise" error in React.
   useEffect(() => {
-    let isMounted = true; // Prevents memory leaks
-
+    let isMounted = true;
     const loadData = async () => {
       setLoadingRecipes(true);
-      // Simulate delay
-      await new Promise((resolve) => setTimeout(resolve, 800));
-
+      await new Promise((r) => setTimeout(r, 800));
       if (isMounted) {
         setRecipes(MOCK_RECIPES);
         setLoadingRecipes(false);
       }
     };
-
     loadData();
-
     return () => {
       isMounted = false;
     };
-  }, []); // Only runs once on mount
+  }, []);
 
-  // Quote Rotation Effect
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentQuote((prev) => {
@@ -74,23 +101,89 @@ export function DashboardContent() {
   }, []);
 
   const filteredRecipes = recipes.filter((recipe) =>
-    (recipe.name || "").toLowerCase().includes(query.toLowerCase()),
+    recipe.name.toLowerCase().includes(query.toLowerCase()),
+  );
+
+  const favoriteRecipes = filteredRecipes.filter((r) => r.favorite);
+  const myRecipes = filteredRecipes.filter((r) => !r.favorite);
+
+  const handleMenuAction = (action: string) => {
+    setMenuOpen(false);
+    if (action === "signout")
+      router.push("/"); // replace with actual signout logic
+    else if (action === "edit") router.push("/edit-profile");
+    else if (action === "recipe") router.push("/myrecepie");
+    else if (action === "add") router.push("/addrecipe");
+  };
+
+  const RecipeCard = ({ recipe }: { recipe: (typeof MOCK_RECIPES)[0] }) => (
+    <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100 flex flex-col">
+      <img
+        src={recipe.image}
+        alt={recipe.name}
+        className="h-40 w-full object-cover"
+      />
+      <div className="p-4 flex-1 flex flex-col justify-between">
+        <div>
+          <h3 className="font-bold text-lg">{recipe.name}</h3>
+          <p className="text-xs text-orange-600 font-semibold mt-1 uppercase flex items-center gap-1">
+            <Clock className="w-3 h-3" /> {recipe.duration} MINS
+          </p>
+          <p className="text-gray-500 text-sm mt-2 line-clamp-3">
+            {recipe.description || recipe.steps}
+          </p>
+        </div>
+        <button className="mt-4 w-full bg-orange-500 hover:bg-orange-600 text-white py-2 rounded-lg font-medium transition">
+          Add to Cart
+        </button>
+      </div>
+    </div>
   );
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
-      <div className="mb-8 flex justify-between items-center">
+      <div className="mb-8 flex justify-between items-center relative">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
           <p className="text-gray-500 mt-1">Welcome back, Chef!</p>
         </div>
-        <button
-          onClick={() => router.push("/")}
-          className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-red-50 hover:text-red-600 transition-all text-sm font-medium"
-        >
-          Sign Out
-        </button>
+        <div className="relative">
+          <button
+            onClick={() => setMenuOpen((prev) => !prev)}
+            className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 flex items-center gap-2 transition-all"
+          >
+            <MenuIcon className="w-4 h-4" /> Menu
+          </button>
+          {menuOpen && (
+            <div className="absolute right-0 mt-2 w-48 bg-white shadow-lg rounded-lg border border-gray-200 z-10">
+              <button
+                onClick={() => handleMenuAction("add")}
+                className="w-full text-left px-4 py-2 hover:bg-gray-100 transition"
+              >
+                Add Recipe
+              </button>
+              <button
+                onClick={() => handleMenuAction("recipe")}
+                className="w-full text-left px-4 py-2 hover:bg-gray-100 transition"
+              >
+                My Recipes
+              </button>
+              <button
+                onClick={() => handleMenuAction("edit")}
+                className="w-full text-left px-4 py-2 hover:bg-gray-100 transition"
+              >
+                Edit Profile
+              </button>
+              <button
+                onClick={() => handleMenuAction("signout")}
+                className="w-full text-left px-4 py-2 hover:bg-gray-100 transition text-red-600"
+              >
+                Sign Out
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Quote Card */}
@@ -103,32 +196,48 @@ export function DashboardContent() {
         </p>
       </div>
 
-      {/* Recipe Grid */}
+      {/* Favorite Recipes */}
+      {favoriteRecipes.length > 0 && (
+        <>
+          <h2 className="text-2xl font-bold text-gray-800 mb-6">
+            Your Favorite Recipes
+          </h2>
+          {loadingRecipes ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-10">
+              {[1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className="h-56 bg-gray-200 animate-pulse rounded-xl"
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-10">
+              {favoriteRecipes.slice(0, 3).map((recipe) => (
+                <RecipeCard key={recipe.id} recipe={recipe} />
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* My Recipes */}
       <h2 className="text-2xl font-bold text-gray-800 mb-6">
         {query ? `Results for "${query}"` : "Explore Recipes"}
       </h2>
-
       {loadingRecipes ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {[1, 2, 3, 4].map((i) => (
             <div
               key={i}
-              className="h-48 bg-gray-200 animate-pulse rounded-xl"
+              className="h-56 bg-gray-200 animate-pulse rounded-xl"
             />
           ))}
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {filteredRecipes.map((recipe) => (
-            <div
-              key={recipe.id}
-              className="bg-white p-4 rounded-xl shadow-sm border border-gray-100"
-            >
-              <h3 className="font-bold">{recipe.name}</h3>
-              <p className="text-xs text-orange-600 font-bold mt-2 uppercase">
-                {recipe.duration} MINS
-              </p>
-            </div>
+          {myRecipes.map((recipe) => (
+            <RecipeCard key={recipe.id} recipe={recipe} />
           ))}
         </div>
       )}
