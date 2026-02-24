@@ -1,7 +1,7 @@
-import { RecipeCard } from "@/components/dashboard/myrecipe";
+import RecipeCard from "@/components/dashboard/myrecipe";
 import React, { Suspense } from "react";
 
-const myrecipe = () => {
+const MyRecipe = () => {
   return (
     <Suspense fallback={<div className="p-8 text-center">Loading...</div>}>
       <RecipeCard />
@@ -9,4 +9,4 @@ const myrecipe = () => {
   );
 };
 
-export default myrecipe;
+export default MyRecipe;

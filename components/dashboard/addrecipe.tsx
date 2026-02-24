@@ -1,187 +1,228 @@
 "use client";
 
 import React, { useState } from "react";
-import { Image as ImageIcon, X, Save, Loader2, Clock } from "lucide-react";
-import Image from "next/image";
+import { X, Loader2, Save, Clock } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import axiosInstance from "@/lib/axiosinstance";
 
 export function AddRecipeModal() {
   const router = useRouter();
+
   const [submitting, setSubmitting] = useState(false);
-  const [loadingNav, setLoadingNav] = useState(false); // for close button
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const [recipe, setRecipe] = useState({
     name: "",
     description: "",
     duration: "",
     ingredients: "",
-    steps: "",
+    instructions: "",
+    image: "",
   });
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setImagePreview(URL.createObjectURL(file));
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
 
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    try {
+      const token = localStorage.getItem("accessToken");
 
-    console.log("Saved Recipe:", recipe);
+      if (!token) {
+        toast.error("Please login first");
+        router.push("/login");
+        return;
+      }
 
-    setSubmitting(false);
-    alert("Recipe saved!");
-    router.push("/myrecipe"); // navigate after save
-  };
+      // Convert ingredients textarea to array
+      const ingredientsArray = recipe.ingredients
+        .split("\n")
+        .map((item) => item.trim())
+        .filter((item) => item !== "");
 
-  const handleClose = async () => {
-    setLoadingNav(true);
-    await new Promise((resolve) => setTimeout(resolve, 500)); // optional loading
-    router.push("/myrecepie");
+      const res = await axiosInstance.post(
+        "/add/recipe",
+        {
+          name: recipe.name,
+          description: recipe.description,
+          duration: recipe.duration,
+          instructions: recipe.instructions,
+          ingredients: ingredientsArray,
+          image: recipe.image || "",
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      toast.success(res.data.message || "Recipe created successfully");
+
+      router.push("/myrecepie");
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || "Failed to create recipe");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-100 flex items-center justify-center p-4 backdrop-blur-sm">
-      <div className="bg-white w-full max-w-5xl h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-green-200">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-green-200 flex justify-between items-center bg-green-50/50">
-          <h2 className="text-xl font-bold text-gray-900">Add New Recipe</h2>
+        <div className="flex justify-between items-center px-6 py-4 border-b">
+          <h2 className="text-2xl font-bold text-gray-800">Add New Recipe</h2>
+
           <button
-            onClick={handleClose}
-            className="p-2 hover:bg-red-100 rounded-full"
+            onClick={() => router.push("/myrecipe")}
+            className="p-2 rounded-full hover:bg-gray-100"
           >
-            {loadingNav ? (
-              <Loader2 className="w-6 h-6 animate-spin text-gray-500" />
-            ) : (
-              <X className="w-6 h-6" />
-            )}
+            <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto p-6">
-          <form
-            id="recipe-form"
-            onSubmit={handleSubmit}
-            className="grid grid-cols-1 md:grid-cols-2 gap-8"
-          >
-            {/* Left */}
-            <div className="space-y-6">
+        <form onSubmit={handleSubmit} className="p-6 grid md:grid-cols-2 gap-8">
+          {/* LEFT SIDE */}
+          <div className="space-y-5">
+            {/* Title */}
+            <div>
+              <label className="text-sm font-medium text-gray-600">
+                Recipe Title
+              </label>
               <input
                 required
-                placeholder="Recipe Title"
-                className="w-full border p-3 rounded-xl"
+                type="text"
+                placeholder="e.g. Chicken Biryani"
+                className="w-full mt-1 border rounded-xl p-3 focus:ring-2 focus:ring-orange-400 outline-none"
                 value={recipe.name}
                 onChange={(e) => setRecipe({ ...recipe, name: e.target.value })}
               />
+            </div>
 
+            {/* Description */}
+            <div>
+              <label className="text-sm font-medium text-gray-600">
+                Short Description
+              </label>
               <textarea
-                placeholder="Short description..."
-                className="w-full border p-3 rounded-xl"
+                required
+                rows={3}
+                placeholder="Write a short description..."
+                className="w-full mt-1 border rounded-xl p-3 focus:ring-2 focus:ring-orange-400 outline-none"
                 value={recipe.description}
                 onChange={(e) =>
                   setRecipe({ ...recipe, description: e.target.value })
                 }
               />
+            </div>
 
-              <div className="relative">
-                <Clock className="absolute left-3 top-3.5 w-5 h-5 text-gray-400" />
+            {/* Duration */}
+            <div>
+              <label className="text-sm font-medium text-gray-600">
+                Cooking Time (minutes)
+              </label>
+              <div className="relative mt-1">
+                <Clock className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
                 <input
+                  required
                   type="number"
-                  placeholder="Cooking time (mins)"
-                  className="w-full border p-3 pl-10 rounded-xl"
+                  placeholder="30"
+                  className="w-full border rounded-xl p-3 pl-10 focus:ring-2 focus:ring-orange-400 outline-none"
                   value={recipe.duration}
                   onChange={(e) =>
                     setRecipe({ ...recipe, duration: e.target.value })
                   }
                 />
               </div>
-
-              <div className="border-2 border-dashed rounded-xl p-4 text-center">
-                {imagePreview ? (
-                  <div className="relative">
-                    <Image
-                      src={imagePreview}
-                      alt="Preview"
-                      className="h-48 w-full object-cover rounded-xl"
-                      width={500}
-                      height={300}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setImagePreview(null)}
-                      className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                ) : (
-                  <label className="cursor-pointer">
-                    <ImageIcon className="mx-auto mb-2" />
-                    <p className="text-sm text-gray-500 font-medium">
-                      Click to upload image
-                    </p>
-                    <input
-                      type="file"
-                      hidden
-                      accept="image/*"
-                      onChange={handleImageChange}
-                    />
-                  </label>
-                )}
-              </div>
             </div>
 
-            {/* Right */}
-            <div className="space-y-6">
+            {/* Image URL */}
+            <div>
+              <label className="text-sm font-medium text-gray-600">
+                Image URL (Optional)
+              </label>
+              <input
+                type="text"
+                placeholder="https://example.com/image.jpg"
+                className="w-full mt-1 border rounded-xl p-3 focus:ring-2 focus:ring-orange-400 outline-none"
+                value={recipe.image}
+                onChange={(e) =>
+                  setRecipe({ ...recipe, image: e.target.value })
+                }
+              />
+            </div>
+          </div>
+
+          {/* RIGHT SIDE */}
+          <div className="space-y-5">
+            {/* Ingredients */}
+            <div>
+              <label className="text-sm font-medium text-gray-600">
+                Ingredients (one per line)
+              </label>
               <textarea
-                placeholder="Ingredients..."
-                className="w-full border p-4 rounded-xl h-40"
+                required
+                rows={6}
+                placeholder="1 cup rice
+2 onions
+1 tbsp oil"
+                className="w-full mt-1 border rounded-xl p-3 focus:ring-2 focus:ring-orange-400 outline-none"
                 value={recipe.ingredients}
                 onChange={(e) =>
                   setRecipe({ ...recipe, ingredients: e.target.value })
                 }
               />
+            </div>
 
+            {/* Instructions */}
+            <div>
+              <label className="text-sm font-medium text-gray-600">
+                Instructions
+              </label>
               <textarea
-                placeholder="Instructions..."
-                className="w-full border p-4 rounded-xl h-40"
-                value={recipe.steps}
+                required
+                rows={6}
+                placeholder="Step 1: Heat oil...
+Step 2: Add onions..."
+                className="w-full mt-1 border rounded-xl p-3 focus:ring-2 focus:ring-orange-400 outline-none"
+                value={recipe.instructions}
                 onChange={(e) =>
-                  setRecipe({ ...recipe, steps: e.target.value })
+                  setRecipe({ ...recipe, instructions: e.target.value })
                 }
               />
             </div>
-          </form>
-        </div>
+          </div>
 
-        {/* Footer */}
-        <div className="px-6 py-4 flex justify-end gap-3 border-t">
-          <button onClick={handleClose} className="px-6 py-2">
-            Cancel
-          </button>
-          <button
-            type="submit"
-            form="recipe-form"
-            disabled={submitting}
-            className="px-8 py-2 bg-orange-500 text-white rounded-xl"
-          >
-            {submitting ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin inline" /> Saving...
-              </>
-            ) : (
-              <>
-                <Save className="w-4 h-4 inline" /> Save
-              </>
-            )}
-          </button>
-        </div>
+          {/* Footer Buttons */}
+          <div className="md:col-span-2 flex justify-end gap-4 pt-4 border-t">
+            <button
+              type="button"
+              onClick={() => router.push("/myrecipe")}
+              className="px-6 py-2 rounded-xl border"
+            >
+              Cancel
+            </button>
+
+            <button
+              type="submit"
+              disabled={submitting}
+              className="px-8 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-xl flex items-center gap-2 transition"
+            >
+              {submitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4" />
+                  Save Recipe
+                </>
+              )}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
