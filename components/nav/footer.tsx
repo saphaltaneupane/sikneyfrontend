@@ -5,76 +5,101 @@ import { Facebook, Twitter, Instagram, Mail } from "lucide-react";
 
 export default function Footer() {
   return (
-    <footer className="w-full bg-gray-900 border-t border-gray-100 pt-20 pb-10">
-      <div className="max-w-6xl mx-auto px-6">
-        {/* TOP SECTION: 2 Column Layout */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-16 mb-16">
-          {/* BRAND COLUMN */}
-          <div className="max-w-sm">
-            <Link
-              href="/"
-              className="text-3xl font-bold text-white tracking-tight"
-            >
+    <footer className="bg-gray-900 text-gray-300">
+      <div className="max-w-7xl mx-auto px-6 py-16">
+        {/* TOP */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+          {/* BRAND */}
+          <div>
+            <Link href="/" className="text-3xl font-bold text-white">
               Cookery<span className="text-[#00a651]">.</span>
             </Link>
-            <p className="mt-6 text-white text-lg leading-relaxed">
-              Your digital kitchen companion. Organize, discover, and share your
-              favorite recipes with ease.
+            <p className="mt-4 text-gray-400 leading-relaxed max-w-sm">
+              Your digital kitchen companion. Discover, organize, and share your
+              favorite recipes effortlessly.
             </p>
           </div>
 
-          {/* STAY INSPIRED COLUMN */}
-          <div className="md:text-right">
-            <h4 className="text-xl font-bold text-white mb-4">Stay Inspired</h4>
-            <p className="text-white text-lg mb-6">
-              Join our community for weekly recipe tips and kitchen hacks.
+          {/* QUICK LINKS */}
+          <div>
+            <h4 className="text-white font-semibold mb-4">Quick Links</h4>
+            <ul className="space-y-3">
+              <li>
+                <Link href="/" className="hover:text-white transition">
+                  Home
+                </Link>
+              </li>
+              <li>
+                <Link href="/recipes" className="hover:text-white transition">
+                  Recipes
+                </Link>
+              </li>
+              <li>
+                <Link href="/favorites" className="hover:text-white transition">
+                  Favorites
+                </Link>
+              </li>
+              <li>
+                <Link href="/signup" className="hover:text-white transition">
+                  Get Started
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* NEWSLETTER / CTA */}
+          <div>
+            <h4 className="text-white font-semibold mb-4">Stay Inspired</h4>
+            <p className="text-gray-400 mb-4">
+              Weekly recipe ideas and kitchen tips—straight to your inbox.
             </p>
-            {/* Optional: Simple underline link for engagement */}
             <Link
               href="/signup"
-              className="text-white font-semibold hover:underline underline-offset-4"
+              className="inline-block text-sm font-semibold text-white border border-gray-700 px-5 py-2 rounded-lg hover:bg-[#00a651] hover:border-[#00a651] transition"
             >
-              Get started for free →
+              Join for free →
             </Link>
           </div>
         </div>
 
-        {/* BOTTOM SECTION */}
-        <div className="pt-10 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-8">
-          {/* COPYRIGHT */}
-          <p className="text-white text-sm font-medium">
+        {/* DIVIDER */}
+        <div className="border-t border-gray-800 my-10" />
+
+        {/* BOTTOM */}
+        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+          <p className="text-sm text-gray-400">
             © {new Date().getFullYear()} Cookery App. All rights reserved.
           </p>
 
-          {/* SOCIAL LINKS - Attractive Hover Effects */}
-          <div className="flex items-center space-x-8">
+          {/* SOCIALS */}
+          <div className="flex items-center gap-6">
             <Link
               href="https://www.instagram.com/"
-              className="text-gray-400 hover:text-[#00a651] transition-all transform hover:-translate-y-1"
+              className="hover:text-[#00a651] transition"
+              aria-label="Instagram"
             >
-              <span className="sr-only">Instagram</span>
-              <Instagram size={22} />
+              <Instagram size={20} />
             </Link>
             <Link
               href="https://x.com/"
-              className="text-gray-400 hover:text-[#00a651] transition-all transform hover:-translate-y-1"
+              className="hover:text-[#00a651] transition"
+              aria-label="Twitter"
             >
-              <span className="sr-only">Twitter</span>
-              <Twitter size={22} />
+              <Twitter size={20} />
             </Link>
             <Link
               href="https://www.facebook.com/"
-              className="text-gray-400 hover:text-[#00a651] transition-all transform hover:-translate-y-1"
+              className="hover:text-[#00a651] transition"
+              aria-label="Facebook"
             >
-              <span className="sr-only">Facebook</span>
-              <Facebook size={22} />
+              <Facebook size={20} />
             </Link>
             <Link
-              href="https://mail.google.com/mail/u/0/#inbox"
-              className="text-gray-400 hover:text-[#00a651] transition-all transform hover:-translate-y-1"
+              href="mailto:support@cookery.app"
+              className="hover:text-[#00a651] transition"
+              aria-label="Email"
             >
-              <span className="sr-only">Email</span>
-              <Mail size={22} />
+              <Mail size={20} />
             </Link>
           </div>
         </div>

@@ -7,13 +7,18 @@ import React from "react";
 
 const page = () => {
   return (
-    <>
+    <div className="min-h-screen flex flex-col">
       <Nav />
-      <Hero />
-      <RouteLogin />
-      <CreateAccount />
+
+      {/* MAIN CONTENT */}
+      <main className="flex-1">
+        <Hero />
+        <RouteLogin />
+        <CreateAccount />
+      </main>
+
       <Footer />
-    </>
+    </div>
   );
 };
 
