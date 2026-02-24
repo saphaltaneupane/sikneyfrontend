@@ -1,179 +1,212 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useFormik } from "formik";
-import * as Yup from "yup";
+import { toast } from "sonner";
+import axios from "axios";
 
-// 1. Define the Validation Schema using Yup
-const SignupSchema = Yup.object().shape({
-  username: Yup.string()
-    .min(2, "Too short!")
-    .max(50, "Too long!")
-    .required("Username is required"),
-  email: Yup.string()
-    .email("Invalid email address")
-    .required("Email is required"),
-  phone: Yup.string()
-    .matches(/^[0-9\s\-\+\(\)]+$/, "Invalid phone format")
-    .nullable(),
-  password: Yup.string()
-    .min(6, "Password must be at least 6 characters")
-    .required("Password is required"),
-});
+import axiosInstance from "@/lib/axiosinstance";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Eye, EyeOff } from "lucide-react";
 
-export default function SignupPage() {
+interface RegisterFormData {
+  username: string;
+  email: string;
+  phone: string;
+  password: string;
+  confirmPassword: string;
+}
+
+export default function RegisterForm() {
   const router = useRouter();
 
-  // 2. Initialize Formik
-  const formik = useFormik({
-    initialValues: {
-      username: "",
-      email: "",
-      phone: "",
-      password: "",
-    },
-    validationSchema: SignupSchema,
-    onSubmit: async (values, { setSubmitting, setStatus }) => {
-      try {
-        console.log("Signup Data:", values);
-
-        // Simulate API Call
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-
-        router.push("/dashboard");
-      } catch (error) {
-        setStatus("Signup failed. Please try again."); // For general form errors
-      } finally {
-        setSubmitting(false);
-      }
-    },
+  const [formData, setFormData] = useState<RegisterFormData>({
+    username: "",
+    email: "",
+    phone: "",
+    password: "",
+    confirmPassword: "",
   });
 
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    if (formData.password !== formData.confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+
+    // Ensure phone is provided
+    if (!formData.phone) {
+      toast.error("Phone number is required");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await axiosInstance.post("/register", {
+        username: formData.username,
+        email: formData.email,
+        phone: formData.phone, // matches your schema
+        password: formData.password,
+      });
+
+      toast.success(res.data.message || "Registered successfully!");
+
+      setFormData({
+        username: "",
+        email: "",
+        phone: "",
+        password: "",
+        confirmPassword: "",
+      });
+
+      router.push("/login");
+    } catch (error: any) {
+      if (axios.isAxiosError(error)) {
+        toast.error(error.response?.data?.message || "Registration failed!");
+      } else {
+        toast.error("Registration failed!");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-orange-50 to-green-100 p-6">
-      <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-xl">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-gray-800 mb-2">
-            Create Account
-          </h2>
-          <p className="text-gray-500">Start building your CookBook today</p>
-        </div>
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-100 to-purple-100 px-4">
+      <Card className="w-full max-w-md shadow-2xl rounded-2xl border border-gray-200 overflow-hidden">
+        <CardHeader className="text-center bg-gradient-to-r from-blue-500 to-purple-500 py-6">
+          <h1 className="text-2xl md:text-3xl font-extrabold text-white">
+            Join our <span className="text-yellow-400">CookBook</span> community
+          </h1>
+        </CardHeader>
 
-        {/* Global Error Message */}
-        {formik.status && (
-          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm text-center">
-            {formik.status}
-          </div>
-        )}
+        <CardContent className="p-8">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Username */}
+            <div className="space-y-1">
+              <Label htmlFor="username">Username</Label>
+              <Input
+                id="username"
+                name="username"
+                type="text"
+                placeholder="Enter your username"
+                value={formData.username}
+                onChange={handleChange}
+                required
+                className="border-gray-300 focus:border-orange-400 focus:ring focus:ring-orange-200"
+              />
+            </div>
 
-        <form onSubmit={formik.handleSubmit} className="space-y-5" noValidate>
-          {/* Username Field */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Username
-            </label>
-            <input
-              type="text"
-              {...formik.getFieldProps("username")}
-              className={`w-full border-2 rounded-lg px-4 py-3 focus:outline-none transition-colors ${
-                formik.touched.username && formik.errors.username
-                  ? "border-red-400 focus:border-red-500"
-                  : "border-gray-200 focus:border-orange-400"
-              }`}
-              placeholder="Enter your username"
-            />
-            {formik.touched.username && formik.errors.username && (
-              <p className="text-red-500 text-xs mt-1">
-                {formik.errors.username}
-              </p>
-            )}
-          </div>
+            {/* Email */}
+            <div className="space-y-1">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                placeholder="Enter your email"
+                value={formData.email}
+                onChange={handleChange}
+                required
+                className="border-gray-300 focus:border-orange-400 focus:ring focus:ring-orange-200"
+              />
+            </div>
 
-          {/* Email Field */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Email
-            </label>
-            <input
-              type="email"
-              {...formik.getFieldProps("email")}
-              className={`w-full border-2 rounded-lg px-4 py-3 focus:outline-none transition-colors ${
-                formik.touched.email && formik.errors.email
-                  ? "border-red-400 focus:border-red-500"
-                  : "border-gray-200 focus:border-orange-400"
-              }`}
-              placeholder="Enter your email"
-            />
-            {formik.touched.email && formik.errors.email && (
-              <p className="text-red-500 text-xs mt-1">{formik.errors.email}</p>
-            )}
-          </div>
+            {/* Phone */}
+            <div className="space-y-1">
+              <Label htmlFor="phone">Phone</Label>
+              <Input
+                id="phone"
+                name="phone"
+                type="text"
+                placeholder="Enter your phone number"
+                value={formData.phone}
+                onChange={handleChange}
+                required
+                className="border-gray-300 focus:border-orange-400 focus:ring focus:ring-orange-200"
+              />
+            </div>
 
-          {/* Phone Field */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Phone (Optional)
-            </label>
-            <input
-              type="tel"
-              {...formik.getFieldProps("phone")}
-              className={`w-full border-2 rounded-lg px-4 py-3 focus:outline-none transition-colors ${
-                formik.touched.phone && formik.errors.phone
-                  ? "border-red-400 focus:border-red-500"
-                  : "border-gray-200 focus:border-orange-400"
-              }`}
-              placeholder="Enter your phone number"
-            />
-            {formik.touched.phone && formik.errors.phone && (
-              <p className="text-red-500 text-xs mt-1">{formik.errors.phone}</p>
-            )}
-          </div>
+            {/* Password */}
+            <div className="space-y-1 relative">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                placeholder="Enter your password"
+                value={formData.password}
+                onChange={handleChange}
+                required
+                className="border-gray-300 focus:border-orange-400 focus:ring focus:ring-orange-200 pr-10"
+              />
+              <button
+                type="button"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
 
-          {/* Password Field */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Password
-            </label>
-            <input
-              type="password"
-              {...formik.getFieldProps("password")}
-              className={`w-full border-2 rounded-lg px-4 py-3 focus:outline-none transition-colors ${
-                formik.touched.password && formik.errors.password
-                  ? "border-red-400 focus:border-red-500"
-                  : "border-gray-200 focus:border-orange-400"
-              }`}
-              placeholder="Min 6 characters"
-            />
-            {formik.touched.password && formik.errors.password && (
-              <p className="text-red-500 text-xs mt-1">
-                {formik.errors.password}
-              </p>
-            )}
-          </div>
+            {/* Confirm Password */}
+            <div className="space-y-1 relative">
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Input
+                id="confirmPassword"
+                name="confirmPassword"
+                type={showConfirmPassword ? "text" : "password"}
+                placeholder="Confirm your password"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                required
+                className="border-gray-300 focus:border-orange-400 focus:ring focus:ring-orange-200 pr-10"
+              />
+              <button
+                type="button"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              >
+                {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
 
-          {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={formik.isSubmitting}
-            className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold py-3 rounded-lg transition-all duration-200 transform hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {formik.isSubmitting ? "Creating Account..." : "Sign up"}
-          </button>
-
-          {/* Login link */}
-          <div className="text-center text-sm text-gray-600 mt-6">
-            Already have an account?{" "}
-            <Link
-              href="/login"
-              className="text-orange-600 hover:text-orange-700 font-semibold"
+            {/* Submit */}
+            <Button
+              type="submit"
+              className="w-full bg-gradient-to-r from-orange-500 to-yellow-400 hover:from-yellow-400 hover:to-orange-500 text-white font-semibold focus:border-orange-400"
+              disabled={loading}
             >
-              Login
-            </Link>
-          </div>
-        </form>
-      </div>
+              {loading ? "Registering..." : "Register"}
+            </Button>
+
+            {/* Links */}
+            <div className="flex justify-between text-sm text-gray-600">
+              <span>
+                Already have an account?{" "}
+                <Link href="/login" className="text-blue-600 hover:underline">
+                  Login
+                </Link>
+              </span>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }
