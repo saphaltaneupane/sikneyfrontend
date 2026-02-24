@@ -16,7 +16,7 @@ import { Eye, EyeOff } from "lucide-react";
 interface RegisterFormData {
   username: string;
   email: string;
-  phone: string;
+  mobileNumber: string;
   password: string;
   confirmPassword: string;
 }
@@ -27,7 +27,7 @@ export default function RegisterForm() {
   const [formData, setFormData] = useState<RegisterFormData>({
     username: "",
     email: "",
-    phone: "",
+    mobileNumber: "",
     password: "",
     confirmPassword: "",
   });
@@ -50,7 +50,7 @@ export default function RegisterForm() {
     }
 
     // Ensure phone is provided
-    if (!formData.phone) {
+    if (!formData.mobileNumber) {
       toast.error("Phone number is required");
       return;
     }
@@ -60,7 +60,7 @@ export default function RegisterForm() {
       const res = await axiosInstance.post("/register", {
         username: formData.username,
         email: formData.email,
-        phone: formData.phone, // matches your schema
+        mobileNumber: formData.mobileNumber, // matches your schema
         password: formData.password,
       });
 
@@ -69,7 +69,7 @@ export default function RegisterForm() {
       setFormData({
         username: "",
         email: "",
-        phone: "",
+        mobileNumber: "",
         password: "",
         confirmPassword: "",
       });
@@ -129,13 +129,13 @@ export default function RegisterForm() {
 
             {/* Phone */}
             <div className="space-y-1">
-              <Label htmlFor="phone">Phone</Label>
+              <Label htmlFor="mobileNumber">Phone</Label>
               <Input
-                id="phone"
-                name="phone"
+                id="mobileNumber"
+                name="mobileNumber"
                 type="text"
                 placeholder="Enter your phone number"
-                value={formData.phone}
+                value={formData.mobileNumber}
                 onChange={handleChange}
                 required
                 className="border-gray-300 focus:border-orange-400 focus:ring focus:ring-orange-200"
