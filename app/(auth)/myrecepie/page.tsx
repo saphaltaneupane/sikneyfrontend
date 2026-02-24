@@ -1,4 +1,4 @@
-import RecipeCard from "@/components/dashboard/myrecipe";
+import RecipeCard from "@/components/dashboard/allrecipe";
 import React, { Suspense } from "react";
 
 const MyRecipe = () => {

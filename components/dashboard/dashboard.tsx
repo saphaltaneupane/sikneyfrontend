@@ -2,66 +2,25 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Heart, Clock, Menu as MenuIcon } from "lucide-react";
+import { Heart as HeartIcon, Clock, Menu as MenuIcon } from "lucide-react";
+import axiosInstance from "@/lib/axiosinstance";
+import { toast } from "sonner";
 
-// Mock Data
+interface Recipe {
+  _id: string;
+  name: string;
+  description: string;
+  ingredients: string[];
+  duration: string;
+  instructions: string;
+  image: string;
+  favorite?: boolean;
+}
+
 const inspirationalQuotes = [
   "Cooking is love made visible.",
   "Good food is the foundation of genuine happiness.",
   "The secret ingredient is always love.",
-];
-
-const MOCK_RECIPES = [
-  {
-    id: "1",
-    name: "Spaghetti Carbonara",
-    duration: 25,
-    ingredients: "200g spaghetti\n100g pancetta",
-    steps: "Cook pasta, fry pancetta, mix with eggs and cheese.",
-    description: "Classic Italian pasta with creamy sauce.",
-    image: "/images/spaghetti.jpg",
-    favorite: true,
-  },
-  {
-    id: "2",
-    name: "Avocado Toast",
-    duration: 10,
-    ingredients: "Bread, Avocado",
-    steps: "Toast bread, smash avocado, add toppings.",
-    description: "Healthy breakfast or snack.",
-    image: "/images/avocado-toast.jpg",
-    favorite: true,
-  },
-  {
-    id: "3",
-    name: "Chicken Curry",
-    duration: 40,
-    ingredients: "Chicken, spices, onions, tomatoes",
-    steps: "Cook chicken, add spices, simmer with sauce.",
-    description: "Spicy and flavorful curry.",
-    image: "/images/chicken-curry.jpg",
-    favorite: true,
-  },
-  {
-    id: "4",
-    name: "Pancakes",
-    duration: 20,
-    ingredients: "Flour, eggs, milk, sugar",
-    steps: "Mix ingredients, cook on skillet.",
-    description: "Fluffy breakfast pancakes.",
-    image: "/images/pancakes.jpg",
-    favorite: false,
-  },
-  {
-    id: "5",
-    name: "Caesar Salad",
-    duration: 15,
-    ingredients: "Lettuce, croutons, dressing",
-    steps: "Toss ingredients together.",
-    description: "Crisp and refreshing salad.",
-    image: "/images/caesar-salad.jpg",
-    favorite: false,
-  },
 ];
 
 export function DashboardContent() {
@@ -69,27 +28,43 @@ export function DashboardContent() {
   const searchParams = useSearchParams();
   const query = searchParams.get("search") || "";
 
-  const [recipes, setRecipes] = useState<typeof MOCK_RECIPES>([]);
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loadingRecipes, setLoadingRecipes] = useState(true);
   const [currentQuote, setCurrentQuote] = useState(inspirationalQuotes[0]);
   const [menuOpen, setMenuOpen] = useState(false);
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const recipesPerPage = 9; // 3 per row x 3 rows
+
+  // Fetch all recipes
   useEffect(() => {
     let isMounted = true;
-    const loadData = async () => {
+    const fetchRecipes = async () => {
       setLoadingRecipes(true);
-      await new Promise((r) => setTimeout(r, 800));
-      if (isMounted) {
-        setRecipes(MOCK_RECIPES);
-        setLoadingRecipes(false);
+      try {
+        const res = await axiosInstance.get("/recipes");
+        if (isMounted) {
+          const fetchedRecipes = res.data.recipes.map((r: Recipe) => ({
+            ...r,
+            favorite: r.favorite ?? false,
+          }));
+          setRecipes(fetchedRecipes);
+        }
+      } catch (error: unknown) {
+        toast.error(
+          (error as any)?.response?.data?.message || "Failed to fetch recipes",
+        );
+      } finally {
+        if (isMounted) setLoadingRecipes(false);
       }
     };
-    loadData();
+    fetchRecipes();
     return () => {
       isMounted = false;
     };
   }, []);
 
+  // Rotate quotes
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentQuote((prev) => {
@@ -105,37 +80,79 @@ export function DashboardContent() {
   );
 
   const favoriteRecipes = filteredRecipes.filter((r) => r.favorite);
-  const myRecipes = filteredRecipes.filter((r) => !r.favorite);
+  const exploreRecipes = filteredRecipes;
+
+  const indexOfLastRecipe = currentPage * recipesPerPage;
+  const indexOfFirstRecipe = indexOfLastRecipe - recipesPerPage;
+  const currentRecipes = exploreRecipes.slice(
+    indexOfFirstRecipe,
+    indexOfLastRecipe,
+  );
+  const totalPages = Math.ceil(exploreRecipes.length / recipesPerPage);
+
+  const handleLogout = () => {
+    localStorage.removeItem("token"); // remove token
+    localStorage.removeItem("user"); // remove user info
+    router.push("/"); // redirect to login page
+  };
+
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) setCurrentPage(page);
+  };
+
+  const toggleFavorite = (id: string) => {
+    setRecipes((prev) =>
+      prev.map((r) => (r._id === id ? { ...r, favorite: !r.favorite } : r)),
+    );
+  };
 
   const handleMenuAction = (action: string) => {
     setMenuOpen(false);
-    if (action === "signout")
-      router.push("/"); // replace with actual signout logic
+    if (action === "signout") router.push("/");
     else if (action === "edit") router.push("/edit-profile");
-    else if (action === "recipe") router.push("/myrecepie");
+    else if (action === "recipe") router.push("/my-recipes");
     else if (action === "add") router.push("/addrecipe");
   };
 
-  const RecipeCard = ({ recipe }: { recipe: (typeof MOCK_RECIPES)[0] }) => (
-    <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100 flex flex-col">
+  const RecipeCard = ({ recipe }: { recipe: Recipe }) => (
+    <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100 flex flex-col transform transition hover:scale-105 hover:shadow-xl">
       <img
         src={recipe.image}
         alt={recipe.name}
         className="h-40 w-full object-cover"
+        onError={(e) => {
+          (e.target as HTMLImageElement).src =
+            "https://placehold.co/600x400?text=Recipe";
+        }}
       />
       <div className="p-4 flex-1 flex flex-col justify-between">
         <div>
           <h3 className="font-bold text-lg">{recipe.name}</h3>
           <p className="text-xs text-orange-600 font-semibold mt-1 uppercase flex items-center gap-1">
-            <Clock className="w-3 h-3" /> {recipe.duration} MINS
+            <Clock className="w-3 h-3" /> {recipe.duration}
           </p>
           <p className="text-gray-500 text-sm mt-2 line-clamp-3">
-            {recipe.description || recipe.steps}
+            {recipe.description || recipe.instructions}
           </p>
         </div>
-        <button className="mt-4 w-full bg-orange-500 hover:bg-orange-600 text-white py-2 rounded-lg font-medium transition">
-          Add to Cart
-        </button>
+        <div className="flex mt-4 justify-between items-center gap-2">
+          <button
+            onClick={() => toggleFavorite(recipe._id)}
+            className="p-2 rounded-full hover:bg-gray-100 transition"
+          >
+            <HeartIcon
+              className={`w-5 h-5 transition ${
+                recipe.favorite ? "text-red-500" : "text-gray-400"
+              }`}
+            />
+          </button>
+          <button
+            onClick={() => router.push(`/recipes/${recipe._id}`)}
+            className="flex-1 bg-orange-500 hover:bg-orange-600 text-white py-2 rounded-lg font-medium transition"
+          >
+            View Details
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -176,7 +193,7 @@ export function DashboardContent() {
                 Edit Profile
               </button>
               <button
-                onClick={() => handleMenuAction("signout")}
+                onClick={() => handleLogout()}
                 className="w-full text-left px-4 py-2 hover:bg-gray-100 transition text-red-600"
               >
                 Sign Out
@@ -189,7 +206,7 @@ export function DashboardContent() {
       {/* Quote Card */}
       <div className="bg-gradient-to-br from-orange-500 to-orange-600 p-8 rounded-2xl shadow-lg text-white mb-10">
         <h3 className="text-orange-100 text-xs font-bold uppercase tracking-widest flex items-center gap-2">
-          <Heart className="w-4 h-4" /> Inspiration
+          <HeartIcon className="w-4 h-4" /> Inspiration
         </h3>
         <p className="text-2xl font-semibold mt-3 leading-relaxed">
           &quot;{currentQuote}&quot;
@@ -213,20 +230,20 @@ export function DashboardContent() {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-10">
-              {favoriteRecipes.slice(0, 3).map((recipe) => (
-                <RecipeCard key={recipe.id} recipe={recipe} />
+              {favoriteRecipes.map((recipe) => (
+                <RecipeCard key={recipe._id} recipe={recipe} />
               ))}
             </div>
           )}
         </>
       )}
 
-      {/* My Recipes */}
+      {/* Explore Recipes */}
       <h2 className="text-2xl font-bold text-gray-800 mb-6">
         {query ? `Results for "${query}"` : "Explore Recipes"}
       </h2>
       {loadingRecipes ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           {[1, 2, 3, 4].map((i) => (
             <div
               key={i}
@@ -234,12 +251,47 @@ export function DashboardContent() {
             />
           ))}
         </div>
+      ) : currentRecipes.length === 0 ? (
+        <p className="text-center mt-10 text-gray-500">No recipes found.</p>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {myRecipes.map((recipe) => (
-            <RecipeCard key={recipe.id} recipe={recipe} />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {currentRecipes.map((recipe) => (
+              <RecipeCard key={recipe._id} recipe={recipe} />
+            ))}
+          </div>
+
+          {/* Pagination */}
+          <div className="flex justify-center items-center gap-3 mt-8">
+            <button
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="px-3 py-1 rounded-lg border border-gray-300 hover:bg-gray-100 transition disabled:opacity-50"
+            >
+              Previous
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => (
+              <button
+                key={i}
+                onClick={() => handlePageChange(i + 1)}
+                className={`px-3 py-1 rounded-lg border border-gray-300 hover:bg-gray-100 transition ${
+                  currentPage === i + 1
+                    ? "bg-orange-500 text-white border-orange-500"
+                    : ""
+                }`}
+              >
+                {i + 1}
+              </button>
+            ))}
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1 rounded-lg border border-gray-300 hover:bg-gray-100 transition disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
+        </>
       )}
     </div>
   );

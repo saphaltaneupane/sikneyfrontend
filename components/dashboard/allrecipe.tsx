@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Heart, Clock } from "lucide-react";
+import { Heart, Clock, ShoppingCart } from "lucide-react";
 import axios from "axios";
 import axiosInstance from "@/lib/axiosinstance";
 import { toast } from "sonner";
@@ -28,7 +28,6 @@ export default function RecipeCard() {
 
         console.log("RESPONSE:", res.data);
 
-        // ⭐ CORRECT FIELD
         setRecipes(res.data.recipes || []);
       } catch (error: unknown) {
         if (axios.isAxiosError(error)) {
@@ -80,15 +79,23 @@ export default function RecipeCard() {
 
               <p className="text-sm text-gray-500 mt-1">{recipe.description}</p>
 
-              <div className="mt-3 flex justify-between items-center">
+              <div className="mt-3 flex justify-between items-center flex-wrap gap-2">
                 <div className="flex items-center gap-2 text-orange-600 text-sm">
                   <Clock className="w-4 h-4" />
                   {recipe.duration}
                 </div>
 
-                <button className="p-2 rounded-full hover:bg-gray-100 transition">
-                  <Heart className="w-5 h-5 text-gray-400" />
-                </button>
+                <div className="flex items-center gap-2">
+                  {/* Favorite Button */}
+                  <button className="p-2 rounded-full hover:bg-gray-100 transition">
+                    <Heart className="w-5 h-5 text-gray-400" />
+                  </button>
+
+                  {/* Add to Cart Button */}
+                  <button className="flex items-center gap-1 px-3 py-1 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition text-sm">
+                    view details
+                  </button>
+                </div>
               </div>
             </div>
           </div>

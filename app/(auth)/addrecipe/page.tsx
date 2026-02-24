@@ -1,10 +1,10 @@
-import { AddRecipeModal } from "@/components/dashboard/addrecipe";
+import AddRecipeForm from "@/components/dashboard/addrecipe";
 import React from "react";
 
 const addrecipe = () => {
   return (
     <div>
-      <AddRecipeModal />
+      <AddRecipeForm />
     </div>
   );
 };
