@@ -163,7 +163,12 @@ export function DashboardContent() {
               </button>
               {menuOpen && (
                 <div className="absolute right-0 mt-2 bg-white rounded-xl shadow border w-44 z-20">
-                  {["add", "recipe", "edit", "signout"].map((a) => (
+                  {[
+                    "add our recipes",
+                    "My recipe",
+                    "edit Profiles",
+                    "signout",
+                  ].map((a) => (
                     <button
                       key={a}
                       onClick={() =>

@@ -13,22 +13,22 @@ export default function AboutUs() {
       bio: "Bikrant combines traditional recipes with modern techniques to bring authentic flavors to your table.",
     },
     {
-      name: "Sita Rimal",
+      name: "Saphalta Neupane",
       role: "Content Creator",
       image: "/avatar.png",
-      bio: "Sita crafts engaging content and shares cooking tips, making the art of cooking accessible to all.",
+      bio: "Saphalta crafts engaging content and shares cooking tips, making the art of cooking accessible to all.",
     },
     {
-      name: "Ram Sharma",
+      name: "Binisha khatri",
       role: "Recipe Developer",
       image: "/avatar.png",
-      bio: "Ram experiments with flavors and ingredients to create innovative recipes for every palate.",
+      bio: "Binisha experiments with flavors and ingredients to create innovative recipes for every palate.",
     },
     {
-      name: "Laxmi Gurung",
+      name: "Puspa Gurung",
       role: "Photographer",
       image: "/avatar.png",
-      bio: "Laxmi captures the essence of every dish, turning recipes into visual stories that inspire.",
+      bio: "Puspa captures the essence of every dish, turning recipes into visual stories that inspire.",
     },
   ];
 
