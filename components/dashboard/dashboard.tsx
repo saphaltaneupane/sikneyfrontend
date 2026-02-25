@@ -112,9 +112,7 @@ export function DashboardContent() {
           className="absolute top-3 right-3 bg-white p-2 rounded-full shadow"
         >
           <Heart
-            className={`w-5 h-5 ${
-              r.favorite ? "text-red-500" : "text-gray-400"
-            }`}
+            className={`w-5 h-5 ${r.favorite ? "text-red-500" : "text-gray-400"}`}
           />
         </button>
       </div>
@@ -140,6 +138,26 @@ export function DashboardContent() {
     </div>
   );
 
+  /* MENU NAVIGATION FIX */
+  const menuItems: { label: string; route?: string; action?: () => void }[] = [
+    { label: "Add Recipes", route: "/addrecipe" },
+    { label: "My Recipes", route: "/my-recipes" },
+    { label: "Edit Profile", route: "/edit-profile" },
+    {
+      label: "Sign Out",
+      action: () => {
+        localStorage.clear();
+        router.push("/");
+      },
+    },
+  ];
+
+  const handleMenuClick = (item: (typeof menuItems)[number]) => {
+    if (item.route) router.push(item.route);
+    if (item.action) item.action();
+    setMenuOpen(false);
+  };
+
   return (
     <div
       className="min-h-screen bg-cover bg-center bg-no-repeat"
@@ -163,30 +181,15 @@ export function DashboardContent() {
               </button>
               {menuOpen && (
                 <div className="absolute right-0 mt-2 bg-white rounded-xl shadow border w-44 z-20">
-                  {[
-                    "add our recipes",
-                    "My recipe",
-                    "edit Profiles",
-                    "signout",
-                  ].map((a) => (
+                  {menuItems.map((item) => (
                     <button
-                      key={a}
-                      onClick={() =>
-                        a === "signout"
-                          ? (localStorage.clear(), router.push("/"))
-                          : router.push(
-                              a === "add"
-                                ? "/addrecipe"
-                                : a === "recipe"
-                                  ? "/my-recipes"
-                                  : "/edit-profile",
-                            )
-                      }
+                      key={item.label}
+                      onClick={() => handleMenuClick(item)}
                       className={`block w-full px-4 py-2 text-left hover:bg-gray-100 ${
-                        a === "signout" && "text-red-600"
+                        item.label === "Sign Out" && "text-red-600"
                       }`}
                     >
-                      {a.toUpperCase()}
+                      {item.label}
                     </button>
                   ))}
                 </div>
