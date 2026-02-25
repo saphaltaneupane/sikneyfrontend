@@ -3,21 +3,13 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
-import {
-  Home,
-  Heart,
-  UtensilsCrossed,
-  ShoppingCart,
-  Search,
-  LogOut,
-} from "lucide-react";
+import { Home, Heart, UtensilsCrossed, Search, LogOut } from "lucide-react";
 
 export default function Sidebar() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const [isCartOpen, setIsCartOpen] = useState(false);
   const [username, setUsername] = useState("Guest");
 
   useEffect(() => {
@@ -57,15 +49,17 @@ export default function Sidebar() {
     router.push("/");
   };
 
+  // Updated navigation items
   const navItems = [
     { name: "Dashboard", href: "/dashboard", icon: Home },
     { name: "AllRecipes", href: "/myrecepie", icon: UtensilsCrossed },
     { name: "Favorites", href: "/fav", icon: Heart },
+    { name: "About Us", href: "/aboutus", icon: Home }, // You can change the icon if needed
   ];
 
   return (
     <>
-      {/* Desktop Sidebar (Fully Transparent) */}
+      {/* Desktop Sidebar */}
       <aside className="hidden md:flex md:flex-col w-64 h-screen sticky top-0 bg-transparent p-6">
         <div className="flex flex-col h-full justify-between">
           <div>
@@ -74,21 +68,18 @@ export default function Sidebar() {
               <p className="text-sm text-gray-500">Your CookBook</p>
             </div>
 
-            {/* User / Cart Button */}
-            <button
-              onClick={() => setIsCartOpen(true)}
-              className="flex items-center gap-3 mb-6 px-4 py-3 rounded-xl hover:bg-white/60 transition w-full"
-            >
+            {/* User Info */}
+            <div className="flex items-center gap-3 mb-6 px-4 py-3 rounded-xl w-full">
               <div className="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center text-white font-bold">
                 {(username?.[0] || "G").toUpperCase()}
               </div>
               <div>
-                <p className="text-xs text-gray-400 uppercase">Your Cart</p>
+                <p className="text-xs text-gray-400 uppercase">User</p>
                 <p className="text-sm font-semibold text-gray-900">
                   {username}
                 </p>
               </div>
-            </button>
+            </div>
 
             {/* Search */}
             <div className="relative mb-6">
@@ -121,14 +112,6 @@ export default function Sidebar() {
                   </Link>
                 );
               })}
-
-              <button
-                onClick={() => setIsCartOpen(true)}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-700 hover:bg-white/60 w-full"
-              >
-                <ShoppingCart className="w-5 h-5" />
-                <span className="text-sm font-medium">Cart Items</span>
-              </button>
             </nav>
           </div>
 
@@ -143,7 +126,7 @@ export default function Sidebar() {
         </div>
       </aside>
 
-      {/* Mobile Bottom Navigation (White BG, Fixed Icons) */}
+      {/* Mobile Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 flex justify-around bg-white border-t py-2 md:hidden">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
