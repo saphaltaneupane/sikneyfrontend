@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { toast } from "sonner";
 import axiosInstance from "@/lib/axiosinstance";
+import { useRouter } from "next/navigation";
 
 interface RecipeFormData {
   name: string;
@@ -14,6 +15,8 @@ interface RecipeFormData {
 }
 
 const AddRecipeForm: React.FC = () => {
+  const router = useRouter();
+
   const [formData, setFormData] = useState<RecipeFormData>({
     name: "",
     description: "",
@@ -28,7 +31,7 @@ const AddRecipeForm: React.FC = () => {
   // Handle normal input change
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-    index?: number
+    index?: number,
   ) => {
     const { name, value } = e.target;
 
@@ -78,24 +81,18 @@ const AddRecipeForm: React.FC = () => {
       data.append("duration", formData.duration);
       data.append("instructions", formData.instructions);
 
-      formData.ingredients.forEach((ing) =>
-        data.append("ingredients", ing)
-      );
+      formData.ingredients.forEach((ing) => data.append("ingredients", ing));
 
-      // IMPORTANT: Must match backend field name "image"
+      // Must match backend field name "image"
       formData.images.forEach((file) => {
         data.append("image", file);
       });
 
-      const res = await axiosInstance.post(
-        "/add/recipe",
-        data,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const res = await axiosInstance.post("/add/recipe", data, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       toast.success(res.data.message || "Recipe added successfully");
 
@@ -109,10 +106,10 @@ const AddRecipeForm: React.FC = () => {
         images: [],
       });
 
+      // Redirect AFTER success
+      router.push("/my-recipes");
     } catch (error: any) {
-      toast.error(
-        error.response?.data?.message || "Failed to add recipe"
-      );
+      toast.error(error.response?.data?.message || "Failed to add recipe");
     } finally {
       setLoading(false);
     }
@@ -120,12 +117,9 @@ const AddRecipeForm: React.FC = () => {
 
   return (
     <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-2xl shadow-lg">
-      <h2 className="text-2xl font-bold mb-6 text-center">
-        Add New Recipe
-      </h2>
+      <h2 className="text-2xl font-bold mb-6 text-center">Add New Recipe</h2>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-
         <input
           name="name"
           placeholder="Recipe Name"
@@ -177,7 +171,6 @@ const AddRecipeForm: React.FC = () => {
           className="w-full p-3 border rounded-xl"
         />
 
-        {/* Multiple Image Upload */}
         <input
           type="file"
           accept="image/*"
@@ -190,9 +183,7 @@ const AddRecipeForm: React.FC = () => {
           type="submit"
           disabled={loading}
           className={`w-full py-3 rounded-xl text-white ${
-            loading
-              ? "bg-orange-300"
-              : "bg-orange-500 hover:bg-orange-600"
+            loading ? "bg-orange-300" : "bg-orange-500 hover:bg-orange-600"
           }`}
         >
           {loading ? "Uploading..." : "Add Recipe"}

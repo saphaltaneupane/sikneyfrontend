@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import axiosInstance from "@/lib/axiosinstance";
 import { toast } from "sonner";
-import { Pencil, Trash2, Eye } from "lucide-react";
+import { Pencil, Trash2, Eye, Plus } from "lucide-react";
 
 export default function MyRecipes() {
   const router = useRouter();
@@ -24,7 +24,7 @@ export default function MyRecipes() {
           },
         });
         setRecipes(res.data.recipes);
-      } catch (err: any) {
+      } catch {
         toast.error("Failed to fetch recipes");
       } finally {
         setLoading(false);
@@ -81,8 +81,20 @@ export default function MyRecipes() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">My Recipes</h1>
+    <div className="max-w-7xl mx-auto px-4 py-8 relative">
+      {/* 🔹 Header */}
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-3xl font-bold">My Recipes</h1>
+
+        {/* ➕ Add Recipe Button */}
+        <button
+          onClick={() => router.push("/addrecipe")}
+          className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-full shadow-lg transition-all hover:scale-105"
+        >
+          <Plus size={18} />
+          Add Recipe
+        </button>
+      </div>
 
       {loading ? (
         <p>Loading...</p>
