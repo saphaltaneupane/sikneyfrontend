@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Heart, Clock, ShoppingCart } from "lucide-react";
 import axios from "axios";
 import axiosInstance from "@/lib/axiosinstance";
@@ -18,6 +19,7 @@ interface Recipe {
 }
 
 export default function RecipeCard() {
+  const router = useRouter();
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -92,7 +94,10 @@ export default function RecipeCard() {
                   </button>
 
                   {/* Add to Cart Button */}
-                  <button className="flex items-center gap-1 px-3 py-1 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition text-sm">
+                  <button
+                    className="flex items-center gap-1 px-3 py-1 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition text-sm"
+                    onClick={() => router.push(`/recipes/${recipe._id}`)}
+                  >
                     view details
                   </button>
                 </div>

@@ -19,14 +19,23 @@ export default function Sidebar() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [username, setUsername] = useState("Guest");
 
-  // On mount, get user info
-  useEffect(() => {
+    useEffect(() => {
     const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      const userObj = JSON.parse(storedUser);
-      setUsername(userObj.username || "Guest");
+
+    if (storedUser && storedUser !== "undefined") {
+      try {
+        const userObj = JSON.parse(storedUser);
+        setUsername(userObj.username || "Guest");
+      } catch (err) {
+        console.error("Failed to parse user from localStorage", err);
+        setUsername("Guest");
+      }
+    } else {
+      setUsername("Guest");
     }
   }, []);
+
+
 
   const currentSearch = searchParams.get("search") || "";
 

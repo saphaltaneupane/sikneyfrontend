@@ -28,7 +28,10 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
-    "**/*.mts"
+    "**/*.mts",
+    "../backend/config/cloudinary.upload.js",
+    "../backend/config/multer.js",
+    "../backend/config/cloudinary.js"
   ],
   "exclude": ["node_modules"]
 }

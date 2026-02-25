@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import { toast } from "sonner";
-import axios from "axios";
 import axiosInstance from "@/lib/axiosinstance";
 
 interface RecipeFormData {
@@ -11,68 +10,8 @@ interface RecipeFormData {
   ingredients: string[];
   duration: string;
   instructions: string;
-  image: string;
+  images: File[];
 }
-
-// Reusable text or textarea input
-const TextInput = ({
-  label,
-  name,
-  value,
-  placeholder,
-  onChange,
-  type = "text",
-}: {
-  label?: string;
-  name: string;
-  value: string;
-  placeholder?: string;
-  onChange: (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) => void;
-  type?: string;
-}) => (
-  <div className="flex flex-col">
-    {label && <label className="mb-1 font-medium text-gray-700">{label}</label>}
-    {type === "textarea" ? (
-      <textarea
-        className="w-full p-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-400"
-        name={name}
-        placeholder={placeholder}
-        value={value}
-        onChange={onChange}
-      />
-    ) : (
-      <input
-        className="w-full p-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-400"
-        type={type}
-        name={name}
-        placeholder={placeholder}
-        value={value}
-        onChange={onChange}
-      />
-    )}
-  </div>
-);
-
-// Ingredient input field
-const IngredientInput = ({
-  value,
-  index,
-  onChange,
-}: {
-  value: string;
-  index: number;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>, index: number) => void;
-}) => (
-  <input
-    className="w-full p-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-400"
-    name="ingredients"
-    placeholder={`Ingredient ${index + 1}`}
-    value={value}
-    onChange={(e) => onChange(e, index)}
-  />
-);
 
 const AddRecipeForm: React.FC = () => {
   const [formData, setFormData] = useState<RecipeFormData>({
@@ -81,17 +20,18 @@ const AddRecipeForm: React.FC = () => {
     ingredients: [""],
     duration: "",
     instructions: "",
-    image: "",
+    images: [],
   });
 
   const [loading, setLoading] = useState(false);
 
-  // Update form fields
+  // Handle normal input change
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-    index?: number,
+    index?: number
   ) => {
     const { name, value } = e.target;
+
     if (name === "ingredients" && index !== undefined) {
       const updatedIngredients = [...formData.ingredients];
       updatedIngredients[index] = value;
@@ -101,36 +41,61 @@ const AddRecipeForm: React.FC = () => {
     }
   };
 
-  // Add new ingredient input
+  // Add ingredient field
   const addIngredientField = () => {
-    setFormData({ ...formData, ingredients: [...formData.ingredients, ""] });
+    setFormData({
+      ...formData,
+      ingredients: [...formData.ingredients, ""],
+    });
   };
 
-  // Submit form
+  // Handle image selection
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files) return;
+
+    const filesArray = Array.from(e.target.files);
+    setFormData({ ...formData, images: filesArray });
+  };
+
+  // Submit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      // Get token from localStorage
       const token = localStorage.getItem("token");
 
-      // If you want cookies instead, you could use:
-      // import Cookies from 'js-cookie';
-      // const token = Cookies.get('token');
-
       if (!token) {
-        toast.error("You are not authorized. Please login first.");
+        toast.error("Please login first.");
         setLoading(false);
         return;
       }
 
-      // Send request via axiosInstance with Authorization header
-      const res = await axiosInstance.post("/add/recipe", formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      const data = new FormData();
+
+      data.append("name", formData.name);
+      data.append("description", formData.description);
+      data.append("duration", formData.duration);
+      data.append("instructions", formData.instructions);
+
+      formData.ingredients.forEach((ing) =>
+        data.append("ingredients", ing)
+      );
+
+      // IMPORTANT: Must match backend field name "image"
+      formData.images.forEach((file) => {
+        data.append("image", file);
       });
+
+      const res = await axiosInstance.post(
+        "/add/recipe",
+        data,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       toast.success(res.data.message || "Recipe added successfully");
 
@@ -141,87 +106,96 @@ const AddRecipeForm: React.FC = () => {
         ingredients: [""],
         duration: "",
         instructions: "",
-        image: "",
+        images: [],
       });
-    } catch (error: unknown) {
-      if (axios.isAxiosError(error)) {
-        toast.error(error.response?.data?.message || "Failed to add recipe");
-      } else {
-        toast.error("Something went wrong");
-      }
+
+    } catch (error: any) {
+      toast.error(
+        error.response?.data?.message || "Failed to add recipe"
+      );
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-2xl shadow-lg border border-gray-200">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
-        Add a New Recipe
+    <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded-2xl shadow-lg">
+      <h2 className="text-2xl font-bold mb-6 text-center">
+        Add New Recipe
       </h2>
 
-      <form className="flex flex-col space-y-4" onSubmit={handleSubmit}>
-        <TextInput
+      <form onSubmit={handleSubmit} className="space-y-4">
+
+        <input
           name="name"
-          value={formData.name}
           placeholder="Recipe Name"
+          value={formData.name}
           onChange={handleChange}
+          className="w-full p-3 border rounded-xl"
         />
-        <TextInput
+
+        <textarea
           name="description"
-          value={formData.description}
           placeholder="Description"
+          value={formData.description}
           onChange={handleChange}
-          type="textarea"
+          className="w-full p-3 border rounded-xl"
         />
 
         {formData.ingredients.map((ing, idx) => (
-          <IngredientInput
+          <input
             key={idx}
+            name="ingredients"
+            placeholder={`Ingredient ${idx + 1}`}
             value={ing}
-            index={idx}
-            onChange={handleChange}
+            onChange={(e) => handleChange(e, idx)}
+            className="w-full p-3 border rounded-xl"
           />
         ))}
 
         <button
           type="button"
           onClick={addIngredientField}
-          className="text-orange-500 hover:text-orange-600 font-medium text-left"
+          className="text-orange-500"
         >
-          + Add another ingredient
+          + Add Ingredient
         </button>
 
-        <TextInput
+        <input
           name="duration"
+          placeholder="Duration"
           value={formData.duration}
-          placeholder="Duration (e.g., 30 mins)"
           onChange={handleChange}
+          className="w-full p-3 border rounded-xl"
         />
-        <TextInput
+
+        <textarea
           name="instructions"
-          value={formData.instructions}
           placeholder="Instructions"
+          value={formData.instructions}
           onChange={handleChange}
-          type="textarea"
+          className="w-full p-3 border rounded-xl"
         />
-        <TextInput
-          name="image"
-          value={formData.image}
-          placeholder="Image URL"
-          onChange={handleChange}
+
+        {/* Multiple Image Upload */}
+        <input
+          type="file"
+          accept="image/*"
+          multiple
+          onChange={handleImageChange}
+          className="w-full p-3 border rounded-xl"
         />
 
         <button
           type="submit"
           disabled={loading}
-          className={`w-full py-3 rounded-xl text-white font-semibold ${
+          className={`w-full py-3 rounded-xl text-white ${
             loading
-              ? "bg-orange-300 cursor-not-allowed"
+              ? "bg-orange-300"
               : "bg-orange-500 hover:bg-orange-600"
-          } transition-colors`}
+          }`}
         >
-          {loading ? "Adding..." : "Add Recipe"}
+          {loading ? "Uploading..." : "Add Recipe"}
         </button>
       </form>
     </div>
