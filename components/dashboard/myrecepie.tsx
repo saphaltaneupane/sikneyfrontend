@@ -34,34 +34,6 @@ export default function MyRecipes() {
     fetchMyRecipes();
   }, [token]);
 
-  // ✏️ Edit
-  const handleEdit = async (recipe: any) => {
-    const name = prompt("Recipe Name", recipe.name);
-    const description = prompt("Description", recipe.description);
-
-    if (!name || !description) return;
-
-    try {
-      const res = await axiosInstance.put(
-        `/edit/recipe/${recipe._id}`,
-        { name, description },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      );
-
-      setRecipes((prev) =>
-        prev.map((r) => (r._id === recipe._id ? res.data.recipe : r)),
-      );
-
-      toast.success("Recipe updated");
-    } catch {
-      toast.error("Update failed");
-    }
-  };
-
   // 🗑️ Delete
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this recipe?")) return;
@@ -116,14 +88,16 @@ export default function MyRecipes() {
 
               {/* 🔹 Top Icons */}
               <div className="absolute top-3 right-3 flex gap-2">
+                {/* ✏️ EDIT BUTTON (FIXED) */}
                 <button
-                  onClick={() => handleEdit(r)}
+                  onClick={() => router.push(`/editrecipe/${r._id}`)}
                   className="bg-white p-2 rounded-full shadow hover:bg-blue-100"
                   title="Edit"
                 >
                   <Pencil size={16} className="text-blue-600" />
                 </button>
 
+                {/* 🗑️ DELETE */}
                 <button
                   onClick={() => handleDelete(r._id)}
                   className="bg-white p-2 rounded-full shadow hover:bg-red-100"
@@ -141,7 +115,7 @@ export default function MyRecipes() {
                   {r.description}
                 </p>
 
-                {/* View Button */}
+                {/* 👁️ View Button */}
                 <button
                   onClick={() => router.push(`/recipes/${r._id}`)}
                   className="mt-4 flex items-center justify-center gap-2 w-full bg-orange-500 hover:bg-orange-600 text-white py-2 rounded-lg"
